@@ -315,6 +315,7 @@ async def main():
 
     force_test_email = os.getenv("FORCE_TEST_EMAIL", "false").lower() == "true"
     event_schedule = os.getenv("EVENT_SCHEDULE", "")
+    print("EVENT_SCHEDULE =", event_schedule)
 
     # Send every time EMS 201 is found
     if found:
