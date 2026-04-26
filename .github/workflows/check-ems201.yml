@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
+    inputs:
+      force_test_email:
+        description: "Send a test email even if EMS 201 is not found"
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   check-course:
@@ -11,10 +17,10 @@ jobs:
 
     steps:
       - name: Check out repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
@@ -32,4 +38,5 @@ jobs:
           SMTP_PASS: ${{ secrets.SMTP_PASS }}
           ALERT_TO: ${{ secrets.ALERT_TO }}
           ALERT_FROM: ${{ secrets.ALERT_FROM }}
+          FORCE_TEST_EMAIL: ${{ github.event.inputs.force_test_email || 'false' }}
         run: python cuesta_ems201_watch.py
