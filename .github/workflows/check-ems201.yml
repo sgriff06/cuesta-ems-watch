@@ -3,7 +3,6 @@ name: Check Cuesta EMS 201
 on:
   schedule:
     - cron: "*/5 * * * *"
-    - cron: "17 */6 * * *"
   workflow_dispatch:
     inputs:
       force_test_email:
@@ -42,5 +41,5 @@ jobs:
           ALERT_TO: ${{ secrets.ALERT_TO }}
           ALERT_FROM: ${{ secrets.ALERT_FROM }}
           FORCE_TEST_EMAIL: ${{ inputs.force_test_email }}
-          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          HEARTBEAT_MODE: "false"
         run: python cuesta_ems201_watch.py
