@@ -324,12 +324,23 @@ async def main():
     found, message = await check_for_ems201()
     print(message)
 
+    force_test_email = os.getenv("FORCE_TEST_EMAIL", "false").lower() == "true"
+
     if found:
         send_email_alert(
             subject="Cuesta alert: EMS 201 is posted",
             body=(
                 "EMS 201 appears to be listed in Cuesta's Fall 2026 schedule.\n\n"
                 "Go check the Class Finder and try to register as soon as possible."
+            ),
+        )
+    elif force_test_email:
+        send_email_alert(
+            subject="TEST: Cuesta EMS watcher email is working",
+            body=(
+                "This is a test email from your GitHub Actions workflow.\n\n"
+                "Current script result: EMS 201 is not listed yet.\n\n"
+                "If you received this, your Gmail notification setup is working."
             ),
         )
 
