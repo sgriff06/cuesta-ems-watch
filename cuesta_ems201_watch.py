@@ -314,10 +314,11 @@ async def main():
     print(message)
 
     force_test_email = os.getenv("FORCE_TEST_EMAIL", "false").lower() == "true"
-    event_schedule = os.getenv("EVENT_SCHEDULE", "")
-    print("EVENT_SCHEDULE =", event_schedule)
+    heartbeat_mode = os.getenv("HEARTBEAT_MODE", "false").lower() == "true"
 
-    # Send every time EMS 201 is found
+    print("FORCE_TEST_EMAIL =", force_test_email)
+    print("HEARTBEAT_MODE =", heartbeat_mode)
+
     if found:
         send_email_alert(
             subject="Cuesta alert: EMS 201 is posted",
@@ -328,7 +329,6 @@ async def main():
         )
         return
 
-    # Manual test email when you click Run workflow and enable the checkbox
     if force_test_email:
         send_email_alert(
             subject="TEST: Cuesta EMS watcher is running",
@@ -340,14 +340,13 @@ async def main():
         )
         return
 
-    # Heartbeat email every 6 hours when the course is still not found
-    if event_schedule == "17 */6 * * *":
+    if heartbeat_mode:
         send_email_alert(
             subject="Cuesta EMS watcher heartbeat: EMS 201 still not listed",
             body=(
                 "Your watcher is still running.\n\n"
                 "Current result: EMS 201 is not listed yet.\n\n"
-                "This is the scheduled 6-hour heartbeat email."
+                "This is the scheduled heartbeat email."
             ),
         )
         return
