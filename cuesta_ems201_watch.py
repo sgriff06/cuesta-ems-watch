@@ -321,6 +321,7 @@ async def check_for_ems201():
 
 
 async def main():
+    print("FORCE_TEST_EMAIL =", os.getenv("FORCE_TEST_EMAIL"))
     found, message = await check_for_ems201()
     print(message)
 
