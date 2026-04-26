@@ -2,19 +2,9 @@ import asyncio
 import os
 import smtplib
 from email.message import EmailMessage
-from pathlib import Path
 from playwright.async_api import async_playwright
 
-STATE_FILE = Path("ems201_seen.txt")
 CLASS_FINDER_URL = "https://ssb2.cuesta.edu/StudentRegistrationSsb/ssb/term/termSelection?mode=search"
-
-
-def already_seen() -> bool:
-    return STATE_FILE.exists() and STATE_FILE.read_text().strip() == "seen"
-
-
-def mark_seen():
-    STATE_FILE.write_text("seen")
 
 
 def send_email_alert(subject: str, body: str):
@@ -26,8 +16,7 @@ def send_email_alert(subject: str, body: str):
     alert_from = os.getenv("ALERT_FROM", smtp_user)
 
     if not all([smtp_user, smtp_pass, alert_to, alert_from]):
-        print("Email settings are missing. Skipping email.")
-        return
+        raise RuntimeError("Missing one or more email environment variables.")
 
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -118,8 +107,8 @@ async def select_subject_and_search(page, subject_name="Emergency Medical Servic
         page.locator('[aria-label*="Browse by Course Subject"]'),
         page.locator('[placeholder*="Browse by Course Subject"]'),
         page.locator('[role="combobox"]'),
-        page.locator('input'),
-        page.locator('button'),
+        page.locator("input"),
+        page.locator("button"),
     ]
 
     for candidate in opener_candidates:
@@ -321,29 +310,46 @@ async def check_for_ems201():
 
 
 async def main():
-    print("FORCE_TEST_EMAIL =", os.getenv("FORCE_TEST_EMAIL"))
     found, message = await check_for_ems201()
     print(message)
 
     force_test_email = os.getenv("FORCE_TEST_EMAIL", "false").lower() == "true"
+    event_schedule = os.getenv("EVENT_SCHEDULE", "")
 
+    # Send every time EMS 201 is found
     if found:
         send_email_alert(
             subject="Cuesta alert: EMS 201 is posted",
             body=(
                 "EMS 201 appears to be listed in Cuesta's Fall 2026 schedule.\n\n"
-                "Go check the Class Finder and try to register as soon as possible."
+                "Go to Cuesta Class Finder and try to register as soon as possible."
             ),
         )
-    elif force_test_email:
+        return
+
+    # Manual test email when you click Run workflow and enable the checkbox
+    if force_test_email:
         send_email_alert(
-            subject="TEST: Cuesta EMS watcher email is working",
+            subject="TEST: Cuesta EMS watcher is running",
             body=(
-                "This is a test email from your GitHub Actions workflow.\n\n"
-                "Current script result: EMS 201 is not listed yet.\n\n"
-                "If you received this, your Gmail notification setup is working."
+                "This is a manual test email from your GitHub Actions workflow.\n\n"
+                "Current result: EMS 201 is not listed yet.\n\n"
+                "If you received this, the email notification system is working."
             ),
         )
+        return
+
+    # Heartbeat email every 6 hours when the course is still not found
+    if event_schedule == "17 */6 * * *":
+        send_email_alert(
+            subject="Cuesta EMS watcher heartbeat: EMS 201 still not listed",
+            body=(
+                "Your watcher is still running.\n\n"
+                "Current result: EMS 201 is not listed yet.\n\n"
+                "This is the scheduled 6-hour heartbeat email."
+            ),
+        )
+        return
 
 
 if __name__ == "__main__":
