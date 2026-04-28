@@ -3,6 +3,7 @@ import os
 import smtplib
 from email.message import EmailMessage
 from playwright.async_api import async_playwright
+import re
 
 CLASS_FINDER_URL = "https://ssb2.cuesta.edu/StudentRegistrationSsb/ssb/term/termSelection?mode=search"
 
@@ -272,7 +273,13 @@ async def check_results_for_ems201(page) -> bool:
     print(text[:3000])
     print("--- END RESULTS PREVIEW ---\n")
 
-    return ("EMS 201" in text) or ("EMS\n201" in text)
+    # Look for 201 as its own number (not part of 1201, 2017, etc.)
+    if re.search(r"\b201\b", text):
+        print("Detected course number 201 in results.")
+        return True
+
+    print("Course 201 not detected.")
+    return False
 
 
 async def check_for_ems201():
